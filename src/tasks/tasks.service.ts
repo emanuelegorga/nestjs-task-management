@@ -10,12 +10,12 @@ import { User } from '../auth/user.entity';
 export class TasksService {
   constructor(private tasksRepository: TasksRepository) {}
 
-  getTasks(filterDto: GetTasksFilterDto): Promise<Task[]> {
-    return this.tasksRepository.getTasks(filterDto);
+  getTasks(filterDto: GetTasksFilterDto, user: User): Promise<Task[]> {
+    return this.tasksRepository.getTasks(filterDto, user);
   }
 
-  async getTaskById(id: string): Promise<Task> {
-    const found = await this.tasksRepository.findById(id);
+  async getTaskById(id: string, user: User): Promise<Task> {
+    const found = await this.tasksRepository.findById(id, user);
 
     if (!found) {
       throw new NotFoundException(`Task with ${id} not found`);
@@ -28,12 +28,16 @@ export class TasksService {
     return this.tasksRepository.createTask(createTaskDto, user);
   }
 
-  async deleteTask(id: string): Promise<void> {
-    await this.tasksRepository.deleteById(id);
+  async deleteTask(id: string, user: User): Promise<void> {
+    await this.tasksRepository.deleteById(id, user);
   }
 
-  async updateTaskStatus(id: string, status: TaskStatus): Promise<Task> {
-    const task = await this.tasksRepository.updateTask(id, status);
+  async updateTaskStatus(
+    id: string,
+    status: TaskStatus,
+    user: User,
+  ): Promise<Task> {
+    const task = await this.tasksRepository.updateTask(id, status, user);
 
     return task;
   }

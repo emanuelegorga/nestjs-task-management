@@ -33,39 +33,43 @@ export class TasksRepository {
     return savedTask;
   }
 
-  async findById(id: string): Promise<Task> {
-    return this.tasksRepository.findOne({ where: { id: id } });
+  async findById(id: string, user: User): Promise<Task> {
+    return this.tasksRepository.findOne({ where: { id: id, user: user } });
   }
 
-  async deleteById(id: string): Promise<void> {
-    const result = await this.tasksRepository.delete(id);
+  async deleteById(id: string, user: User): Promise<void> {
+    const result = await this.tasksRepository.delete({ id, user });
     if (result.affected === 0) {
       throw new NotFoundException(`Task with ${id} not found`);
     }
   }
 
-  async updateTask(id: string, status: TaskStatus): Promise<Task> {
-    const task = await this.findById(id);
+  async updateTask(id: string, status: TaskStatus, user: User): Promise<Task> {
+    const task = await this.findById(id, user);
     task.status = status;
     this.tasksRepository.save(task);
 
     return task;
   }
 
-  async getTasks(filterDto: GetTasksFilterDto): Promise<Task[]> {
+  async getTasks(filterDto: GetTasksFilterDto, user: User): Promise<Task[]> {
     const { status, search } = filterDto;
 
+    const query = this.tasksRepository.createQueryBuilder('task');
+    query.where({ user });
+
     if (status) {
-      return this.tasksRepository.find({ where: { status: status } });
+      query.andWhere('task.status = :status', { status });
     }
 
     if (search) {
-      return this.tasksRepository.find({
-        where: [{ title: search }, { description: search }],
-      });
+      query.andWhere(
+        '(LOWER(task.title) LIKE LOWER(:search) OR LOWER(task.description) LIKE LOWER(:search))',
+        { search: `%${search}%` },
+      );
     }
 
-    const tasks = await this.tasksRepository.find();
+    const tasks = await query.getMany();
     return tasks;
   }
 }
