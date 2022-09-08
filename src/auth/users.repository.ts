@@ -37,4 +37,8 @@ export class UsersRepository {
       }
     }
   }
+
+  async findByUsername(username: string): Promise<User> {
+    return this.usersRepository.findOne({ where: { username: username } });
+  }
 }
